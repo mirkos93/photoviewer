@@ -22,12 +22,12 @@
 @end
 
 
-
-
 @implementation PhotoViewer
 
 - (void)setupDocumentControllerWithURL:(NSURL *)url andTitle:(NSString *)title
 {
+    printf(url);
+    printf(title);
     if (self.docInteractionController == nil) {
         self.docInteractionController = [UIDocumentInteractionController interactionControllerWithURL:url];
         self.docInteractionController.name = title;

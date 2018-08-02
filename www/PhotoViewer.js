@@ -15,7 +15,7 @@ exports.show = function(url, title, options) {
 
     if (options.closeButton === undefined) {
         options.closeButton = true;
-    }
+    }ù
 
     if (options.copyToReference === undefined) {
         options.copyToReference = false;
