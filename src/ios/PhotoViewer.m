@@ -26,8 +26,6 @@
 
 - (void)setupDocumentControllerWithURL:(NSURL *)url andTitle:(NSString *)title
 {
-    printf(url);
-    printf(title);
     if (self.docInteractionController == nil) {
         self.docInteractionController = [UIDocumentInteractionController interactionControllerWithURL:url];
         self.docInteractionController.name = title;
@@ -71,12 +69,21 @@
         [activityIndicator startAnimating];
 
         CDVPluginResult* pluginResult = nil;
+        
+        //Cattura dei dati
         NSString* url = [command.arguments objectAtIndex:0];
+        NSLog(@"url: %@", url);
         NSString* title = [command.arguments objectAtIndex:1];
+        NSLog(@"title: %@", title);
         BOOL isShareEnabled = [[command.arguments objectAtIndex:2] boolValue];
+        NSLog(@"isShareEnabled: %@", isShareEnabled);
         showCloseBtn = [[command.arguments objectAtIndex:3] boolValue];
+        NSLog(@"showCloseBtn: %@", showCloseBtn);
         copyToReference = [[command.arguments objectAtIndex:4] boolValue];
-
+        NSLog(@"copyToReference: %@", copyToReference);
+        NSString* message = [command.arguments objectAtIndex:5];
+        NSLog(@"message: %@", message);
+        
         if ([url rangeOfString:@"http"].location != NSNotFound) {
             copyToReference = true;
         }
@@ -92,7 +99,22 @@
                 if (URL) {
                     if(isShareEnabled){
                         [self.documentURLs addObject:URL];
-                        [self setupDocumentControllerWithURL:URL andTitle:title];
+                        
+                        // create image (dovrebbe prendere quella che vede l'utente)
+                        UIImage *theImage = imageView.image;
+                        // create a message
+                        NSString *theMessage = message;
+                        NSURL *theUrl = URL;
+                        NSArray *items = @[theMessage, theImage, theUrl];
+                        
+                        // build an activity view controller
+                        UIActivityViewController *controller = [[UIActivityViewController alloc]initWithActivityItems:items applicationActivities:nil];
+                        
+                        // and present it
+                        [self presentActivityController:controller];
+                        
+                        //Inizializza il DocumentController
+                        /*[self setupDocumentControllerWithURL:URL andTitle:title];
                         double delayInSeconds = 0.1;
                         dispatch_time_t popTime = dispatch_time(DISPATCH_TIME_NOW, delayInSeconds * NSEC_PER_SEC);
                         dispatch_after(popTime, dispatch_get_main_queue(), ^(void){
@@ -100,7 +122,7 @@
                             [self.docInteractionController presentPreviewAnimated:YES];
                             //[self.docInteractionController presentPreviewAnimated:NO];
 
-                        });
+                        });*/
                     } else {
                         dispatch_async(dispatch_get_main_queue(), ^{
                             [self showFullScreen:URL andTitle:title];
@@ -118,6 +140,40 @@
         [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
     }
 }
+
+
+- (void)presentActivityController:(UIActivityViewController *)controller {
+    
+    // for iPad: make the presentation a Popover
+    controller.modalPresentationStyle = UIModalPresentationPopover;
+    [self presentViewController:controller animated:YES completion:nil];
+    
+    UIPopoverPresentationController *popController = [controller popoverPresentationController];
+    popController.permittedArrowDirections = UIPopoverArrowDirectionAny;
+    popController.barButtonItem = self.navigationItem.leftBarButtonItem;
+    
+    // access the completion handler
+    controller.completionWithItemsHandler = ^(NSString *activityType,
+                                              BOOL completed,
+                                              NSArray *returnedItems,
+                                              NSError *error){
+        // react to the completion
+        if (completed) {
+            
+            // user shared an item
+            NSLog(@"We used activity type%@", activityType);
+            
+        } else {
+            
+            // user cancelled
+            NSLog(@"We didn't want to share anything after all.");
+        }
+        
+        if (error) {
+            NSLog(@"An Error occured: %@, %@", error.localizedDescription, error.localizedFailureReason);
+        }
+    };
+
 
 - (NSURL *)localFileURLForImage:(NSString *)image
 {
