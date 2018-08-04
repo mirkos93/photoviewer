@@ -1,12 +1,16 @@
 var exec = require('cordova/exec');
 
-exports.show = function(url, title, options) {
+exports.show = function(url, title, options, message) {
     if (title == undefined) {
         title = '';
     }
 
     if (typeof options == "undefined") {
         options = {};
+    }
+
+    if ( typeof message === "undefined" ){
+      message = "";
     }
 
     if (options.share === undefined) {
@@ -21,11 +25,7 @@ exports.show = function(url, title, options) {
         options.copyToReference = false;
     }
 
-    if ( options.message === undefined ){
-      options.message = "";
-    }
-
-    var args = [url, title, options.share, options.closeButton, options.copyToReference, options.message];
+    var args = [url, title, options.share, options.closeButton, options.copyToReference, message];
 
     exec(function() {}, function() {}, "PhotoViewer", "show", args);
 };
